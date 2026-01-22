@@ -200,6 +200,11 @@ export interface HistoryDetail {
     task_id: string | null
     generated: string[]
   }
+  content?: {
+    titles: string[]
+    copywriting: string
+    tags: string[]
+  }
   status: string
   thumbnail: string | null
 }
@@ -211,6 +216,7 @@ export interface CreateHistoryParams {
   topic: string
   outline: { raw: string; pages: Page[] }
   task_id?: string
+  content?: { titles: string[]; copywriting: string; tags: string[] }
 }
 
 /**
@@ -221,6 +227,7 @@ export interface UpdateHistoryParams {
   images?: { task_id: string | null; generated: string[] }
   status?: string
   thumbnail?: string
+  content?: { titles: string[]; copywriting: string; tags: string[] }
 }
 
 /**
@@ -259,7 +266,8 @@ export interface UpdateHistoryParams {
 export async function createHistory(
   topic: string,
   outline: { raw: string; pages: Page[] },
-  taskId?: string
+  taskId?: string,
+  content?: { titles: string[]; copywriting: string; tags: string[] }
 ): Promise<{ success: boolean; record_id?: string; error?: string }> {
   try {
     const response = await axios.post(
@@ -267,7 +275,8 @@ export async function createHistory(
       {
         topic,
         outline,
-        task_id: taskId
+        task_id: taskId,
+        content
       },
       {
         timeout: 10000 // 10秒超时

@@ -460,6 +460,13 @@ export const useGeneratorStore = defineStore('generator', {
       this.content.tags = tags
       this.content.status = 'done'
       this.content.error = undefined
+
+      // 如果有历史记录ID，保存到服务器
+      if (this.recordId) {
+        this.saveHistory({
+          content: { titles, copywriting, tags }
+        })
+      }
     },
 
     /**
@@ -508,6 +515,35 @@ export const useGeneratorStore = defineStore('generator', {
       // 如果设置了新的recordId，同时更新最后保存时间
       if (recordId !== null) {
         this.lastSavedAt = new Date().toISOString()
+      }
+    },
+
+    /**
+     * 保存当前状态到服务器历史记录
+     * @param data 要更新的数据（可选，默认为当前 store 中的核心数据）
+     */
+    async saveHistory(data?: any) {
+      if (!this.recordId) return
+
+      try {
+        const updateData = data || {
+          topic: this.topic,
+          outline: {
+            raw: this.outline.raw,
+            pages: this.outline.pages
+          },
+          content: {
+            titles: this.content.titles,
+            copywriting: this.content.copywriting,
+            tags: this.content.tags
+          }
+        }
+
+        const { updateHistory } = await import('../api')
+        await updateHistory(this.recordId, updateData)
+        this.markSaved()
+      } catch (e) {
+        console.error('保存历史记录失败:', e)
       }
     },
 

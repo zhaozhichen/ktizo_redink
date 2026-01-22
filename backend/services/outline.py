@@ -20,6 +20,25 @@ class OutlineService:
 
     def _load_text_config(self) -> dict:
         """加载文本生成配置"""
+        # 优先从环境变量加载
+        api_key = os.getenv('GEMINI_API_KEY')
+        if api_key:
+            text_model = os.getenv('GEMINI_TEXT_MODEL', 'gemini-3-flash-preview')
+            logger.info("从环境变量加载文本生成配置")
+            return {
+                'active_provider': 'gemini',
+                'providers': {
+                    'gemini': {
+                        'type': 'google_gemini',
+                        'api_key': api_key,
+                        'model': text_model,
+                        'temperature': 1.0,
+                        'max_output_tokens': 8000
+                    }
+                }
+            }
+        
+        # 回退到读取 YAML 文件
         config_path = Path(__file__).parent.parent.parent / 'text_providers.yaml'
         logger.debug(f"加载文本配置: {config_path}")
 

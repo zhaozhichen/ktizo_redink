@@ -63,6 +63,7 @@ def create_history_blueprint():
             topic = data.get('topic')
             outline = data.get('outline')
             task_id = data.get('task_id')
+            content = data.get('content')
 
             if not topic or not outline:
                 return jsonify({
@@ -71,7 +72,7 @@ def create_history_blueprint():
                 }), 400
 
             history_service = get_history_service()
-            record_id = history_service.create_record(topic, outline, task_id)
+            record_id = history_service.create_record(topic, outline, task_id, content)
 
             return jsonify({
                 "success": True,
@@ -199,6 +200,7 @@ def create_history_blueprint():
         - images: 图片信息 { task_id, generated: [] }
         - status: 状态（draft/generating/partial/completed/error）
         - thumbnail: 缩略图文件名
+        - content: 生成的内容 { titles: [], copywriting: "", tags: [] }
 
         返回：
         - success: 是否成功
@@ -232,6 +234,7 @@ def create_history_blueprint():
             images = data.get('images')
             status = data.get('status')
             thumbnail = data.get('thumbnail')
+            content = data.get('content')
 
             history_service = get_history_service()
             success = history_service.update_record(
@@ -239,7 +242,8 @@ def create_history_blueprint():
                 outline=outline,
                 images=images,
                 status=status,
-                thumbnail=thumbnail
+                thumbnail=thumbnail,
+                content=content
             )
 
             if not success:

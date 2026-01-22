@@ -37,6 +37,21 @@
               </svg>
               查看大纲
             </button>
+            <button
+              class="view-outline-btn"
+              @click="$emit('showContent')"
+              title="查看生成文案"
+              style="margin-left: 8px;"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="11" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="13" x2="14" y2="13"></line>
+                <line x1="11" y1="17" x2="8" y2="17"></line>
+              </svg>
+              查看文案
+            </button>
           </div>
         </div>
 
@@ -53,7 +68,6 @@
         </div>
       </div>
 
-      <!-- 图片网格 -->
       <div class="modal-gallery-grid">
         <div
           v-for="(img, idx) in record.images.generated"
@@ -87,13 +101,13 @@
           <div class="placeholder" v-else>Waiting...</div>
 
           <div class="img-footer">
-            <span>Page {{ idx + 1 }}</span>
+            <span class="page-tag">P{{ idx + 1 }}</span>
             <span
               v-if="img"
               class="download-link"
               @click="$emit('download', img, idx)"
             >
-              下载
+              下载图片
             </span>
           </div>
         </div>
@@ -128,6 +142,11 @@ interface ViewingRecord {
     task_id: string
     generated: string[]
   }
+  content?: {
+    titles: string[]
+    copywriting: string
+    tags: string[]
+  }
 }
 
 // 定义 Props
@@ -141,6 +160,7 @@ const props = defineProps<{
 defineEmits<{
   (e: 'close'): void
   (e: 'showOutline'): void
+  (e: 'showContent'): void
   (e: 'downloadAll'): void
   (e: 'download', filename: string, index: number): void
   (e: 'regenerate', index: number): void
@@ -426,6 +446,12 @@ const formattedDate = computed(() => {
 
 .download-link:hover {
   opacity: 0.7;
+}
+
+.page-tag {
+  font-weight: 700;
+  color: #ccc;
+  font-family: 'Inter', sans-serif;
 }
 
 /* 响应式 */

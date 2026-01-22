@@ -1,4 +1,5 @@
 import logging
+import os
 import yaml
 from pathlib import Path
 
@@ -16,10 +17,60 @@ class Config:
     _text_providers_config = None
 
     @classmethod
+    def _load_from_env(cls) -> tuple[dict, dict]:
+        """
+        从环境变量加载 Gemini 配置
+        
+        Returns:
+            tuple: (text_config, image_config) 如果环境变量存在，否则返回 (None, None)
+        """
+        api_key = os.getenv('GEMINI_API_KEY')
+        if not api_key:
+            return None, None
+        
+        text_model = os.getenv('GEMINI_TEXT_MODEL', 'gemini-3-flash-preview')
+        image_model = os.getenv('GEMINI_IMAGE_MODEL', 'gemini-3-pro-image-preview')
+        
+        text_config = {
+            'active_provider': 'gemini',
+            'providers': {
+                'gemini': {
+                    'type': 'google_gemini',
+                    'api_key': api_key,
+                    'model': text_model,
+                    'temperature': 1.0,
+                    'max_output_tokens': 8000
+                }
+            }
+        }
+        
+        image_config = {
+            'active_provider': 'gemini',
+            'providers': {
+                'gemini': {
+                    'type': 'google_genai',
+                    'api_key': api_key,
+                    'model': image_model,
+                    'high_concurrency': False
+                }
+            }
+        }
+        
+        logger.info("从环境变量加载 Gemini 配置")
+        return text_config, image_config
+
+    @classmethod
     def load_image_providers_config(cls):
         if cls._image_providers_config is not None:
             return cls._image_providers_config
 
+        # 优先从环境变量加载
+        _, image_config = cls._load_from_env()
+        if image_config:
+            cls._image_providers_config = image_config
+            return cls._image_providers_config
+
+        # 回退到读取 YAML 文件
         config_path = Path(__file__).parent.parent / 'image_providers.yaml'
         logger.debug(f"加载图片服务商配置: {config_path}")
 
@@ -54,6 +105,13 @@ class Config:
         if cls._text_providers_config is not None:
             return cls._text_providers_config
 
+        # 优先从环境变量加载
+        text_config, _ = cls._load_from_env()
+        if text_config:
+            cls._text_providers_config = text_config
+            return cls._text_providers_config
+
+        # 回退到读取 YAML 文件
         config_path = Path(__file__).parent.parent / 'text_providers.yaml'
         logger.debug(f"加载文本服务商配置: {config_path}")
 

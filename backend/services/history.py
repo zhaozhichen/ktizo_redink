@@ -90,7 +90,8 @@ class HistoryService:
         self,
         topic: str,
         outline: Dict,
-        task_id: Optional[str] = None
+        task_id: Optional[str] = None,
+        content: Optional[Dict] = None
     ) -> str:
         """
         创建新的历史记录
@@ -101,6 +102,7 @@ class HistoryService:
             topic: 绘本主题/标题
             outline: 大纲内容，包含 pages 数组等信息
             task_id: 关联的生成任务 ID（可选）
+            content: 生成的内容，包含 titles, copywriting, tags（可选）
 
         Returns:
             str: 新创建的记录 ID（UUID 格式）
@@ -118,7 +120,12 @@ class HistoryService:
             "title": topic,
             "created_at": now,
             "updated_at": now,
-            "outline": outline,  # 保存完整的大纲数据
+            "outline": outline,  # 保存完整大纲数据
+            "content": content or {
+                "titles": [],
+                "copywriting": "",
+                "tags": []
+            },
             "images": {
                 "task_id": task_id,
                 "generated": []  # 初始无生成图片
@@ -198,7 +205,8 @@ class HistoryService:
         outline: Optional[Dict] = None,
         images: Optional[Dict] = None,
         status: Optional[str] = None,
-        thumbnail: Optional[str] = None
+        thumbnail: Optional[str] = None,
+        content: Optional[Dict] = None
     ) -> bool:
         """
         更新历史记录
@@ -212,6 +220,7 @@ class HistoryService:
             images: 图片信息（可选，包含 task_id 和 generated 列表）
             status: 状态（可选）
             thumbnail: 缩略图文件名（可选）
+            content: 生成的内容（可选）
 
         Returns:
             bool: 更新是否成功，记录不存在时返回 False
@@ -248,6 +257,10 @@ class HistoryService:
         # 更新缩略图
         if thumbnail is not None:
             record["thumbnail"] = thumbnail
+
+        # 更新内容
+        if content is not None:
+            record["content"] = content
 
         # 保存完整记录
         record_path = self._get_record_path(record_id)

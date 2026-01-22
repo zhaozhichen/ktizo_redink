@@ -103,6 +103,7 @@
       :regeneratingImages="regeneratingImages"
       @close="closeGallery"
       @showOutline="showOutlineModal = true"
+      @showContent="showContentModal = true"
       @regenerate="regenerateHistoryImage"
       @downloadAll="downloadAllImages"
       @download="downloadImage"
@@ -114,6 +115,14 @@
       :visible="showOutlineModal"
       :pages="viewingRecord.outline.pages"
       @close="showOutlineModal = false"
+    />
+
+    <!-- 文案查看模态框 -->
+    <ContentModal
+      v-if="showContentModal && viewingRecord"
+      :visible="showContentModal"
+      :content="viewingRecord.content"
+      @close="showContentModal = false"
     />
 
   </div>
@@ -140,6 +149,7 @@ import StatsOverview from '../components/history/StatsOverview.vue'
 import GalleryCard from '../components/history/GalleryCard.vue'
 import ImageGalleryModal from '../components/history/ImageGalleryModal.vue'
 import OutlineModal from '../components/history/OutlineModal.vue'
+import ContentModal from '../components/history/ContentModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -158,6 +168,7 @@ const totalPages = ref(1)
 const viewingRecord = ref<any>(null)
 const regeneratingImages = ref<Set<number>>(new Set())
 const showOutlineModal = ref(false)
+const showContentModal = ref(false)
 const isScanning = ref(false)
 
 /**
@@ -227,6 +238,15 @@ async function loadRecord(id: string) {
     store.setTopic(res.record.title)
     store.setOutline(res.record.outline.raw, res.record.outline.pages)
     store.setRecordId(res.record.id)
+    if (res.record.content) {
+      store.setContent(
+        res.record.content.titles,
+        res.record.content.copywriting,
+        res.record.content.tags
+      )
+    } else {
+      store.clearContent()
+    }
     if (res.record.images.generated.length > 0) {
       store.taskId = res.record.images.task_id
       store.images = res.record.outline.pages.map((page, idx) => {
@@ -257,6 +277,7 @@ async function viewImages(id: string) {
 function closeGallery() {
   viewingRecord.value = null
   showOutlineModal.value = false
+  showContentModal.value = false
 }
 
 /**
