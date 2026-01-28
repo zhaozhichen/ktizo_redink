@@ -12,6 +12,8 @@ class Config:
     PORT = 12398
     CORS_ORIGINS = ['http://localhost:5173', 'http://localhost:3000']
     OUTPUT_DIR = 'output'
+    MAX_CONTENT_LENGTH = 512 * 1024 * 1024  # 512MB capability for multiple 20MB images
+
 
     _image_providers_config = None
     _text_providers_config = None

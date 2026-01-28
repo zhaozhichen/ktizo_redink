@@ -1,6 +1,7 @@
 """图片生成服务"""
 import logging
 import os
+import base64
 import uuid
 import time
 import threading
@@ -142,6 +143,25 @@ class ImageService:
         page_type = page["type"]
         page_content = page["content"]
 
+        # 检查是否有页面特定的参考图
+        page_specific_image_data = None
+        if "user_image" in page and page["user_image"]:
+            try:
+                img_b64 = page["user_image"]
+                # 移除可能的 data URL 前缀
+                if ',' in img_b64:
+                    img_b64 = img_b64.split(',')[1]
+                page_specific_image_data = base64.b64decode(img_b64)
+                
+                # 压缩页面特定参考图
+                if page_specific_image_data:
+                    original_size = len(page_specific_image_data)
+                    page_specific_image_data = compress_image(page_specific_image_data, max_size_kb=200)
+                    logger.debug(f"  使用页面特定参考图 (原始 {original_size} bytes, 压缩后 {len(page_specific_image_data)} bytes)")
+            except Exception as e:
+                logger.error(f"  解析页面特定user_image失败或压缩失败: {e}")
+                page_specific_image_data = None
+
         try:
             logger.debug(f"生成图片 [{index}]: type={page_type}")
 
@@ -162,6 +182,14 @@ class ImageService:
                     user_topic=user_topic if user_topic else "未提供"
                 )
 
+            # 如果有页面特定参考图，修改 prompt 增加指令
+            if page_specific_image_data:
+                prompt += "\n\n【特别指示】我为你提供了一张该页面的基础参考图。请你务必基于这张参考图片的构图、视角和主要元素进行重绘。保持参考图的结构，但根据【页面内容】的描述进行细节调整和风格统一。不要随意改变参考图的主体结构。"
+
+            # 确定主要参考图
+            # 如果有页面特定参考图，优先使用它
+            primary_reference_image = page_specific_image_data if page_specific_image_data else reference_image
+
             # 调用生成器生成图片
             if self.provider_config.get('type') == 'google_genai':
                 logger.debug(f"  使用 Google GenAI 生成器")
@@ -170,15 +198,20 @@ class ImageService:
                     aspect_ratio=self.provider_config.get('default_aspect_ratio', '3:4'),
                     temperature=self.provider_config.get('temperature', 1.0),
                     model=self.provider_config.get('model', 'gemini-3-pro-image-preview'),
-                    reference_image=reference_image,
+                    reference_image=primary_reference_image,
                 )
             elif self.provider_config.get('type') == 'image_api':
                 logger.debug(f"  使用 Image API 生成器")
                 # Image API 支持多张参考图片
-                # 组合参考图片：用户上传的图片 + 封面图
+                # 优先级：页面特定图 > 用户全局上传图 > 封面参考图
                 reference_images = []
+                
+                if page_specific_image_data:
+                    reference_images.append(page_specific_image_data)
+
                 if user_images:
                     reference_images.extend(user_images)
+                
                 if reference_image:
                     reference_images.append(reference_image)
 

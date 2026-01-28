@@ -102,7 +102,15 @@ function saveState(state: GeneratorState) {
     const toSave = {
       stage: state.stage,                    // 当前阶段
       topic: state.topic,                    // 用户输入的主题
-      outline: state.outline,                // 大纲数据
+      // 移除页面特定的 user_image（base64太大会导致超过localStorage限制）
+      outline: {
+        raw: state.outline.raw,
+        pages: state.outline.pages.map(p => {
+          // 创建副本并移除 user_image
+          const { user_image, ...rest } = p
+          return rest
+        })
+      },
       progress: state.progress,              // 生成进度
       images: state.images,                  // 生成的图片结果
       taskId: state.taskId,                  // 任务ID
@@ -204,6 +212,18 @@ export const useGeneratorStore = defineStore('generator', {
     },
 
     /**
+     * 设置页面的参考图片
+     * @param index 页面索引
+     * @param imageBase64 图片base64数据
+     */
+    setPageImage(index: number, imageBase64: string | undefined) {
+      const page = this.outline.pages.find(p => p.index === index)
+      if (page) {
+        page.user_image = imageBase64
+      }
+    },
+
+    /**
      * 根据 pages 数组重新生成 raw 文本
      * 用于保持 raw 和 pages 的数据同步
      */
@@ -293,6 +313,10 @@ export const useGeneratorStore = defineStore('generator', {
       this.progress.current = 0
       this.progress.total = this.outline.pages.length
       this.progress.status = 'generating'
+
+      // 清空之前生成的内容（标题、文案），防止显示上一篇的内容
+      this.clearContent()
+
       // 为每个页面创建对应的图片占位对象
       this.images = this.outline.pages.map(page => ({
         index: page.index,

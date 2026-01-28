@@ -6,6 +6,7 @@ export interface Page {
   index: number
   type: 'cover' | 'content' | 'summary'
   content: string
+  user_image?: string // Base64 image string for manual reference
 }
 
 export interface OutlineResponse {

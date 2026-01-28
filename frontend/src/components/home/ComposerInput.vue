@@ -14,7 +14,6 @@
         @input="handleInput"
         class="composer-textarea"
         placeholder="输入主题，例如：秋季显白美甲..."
-        @keydown.enter.prevent="handleEnter"
         :disabled="loading"
         rows="1"
       ></textarea>
@@ -120,13 +119,7 @@ function handleInput(event: Event) {
   adjustHeight()
 }
 
-/**
- * 处理回车键
- */
-function handleEnter(e: KeyboardEvent) {
-  if (e.shiftKey) return // 允许 Shift+Enter 换行
-  emit('generate')
-}
+
 
 /**
  * 自动调整输入框高度
@@ -149,6 +142,12 @@ function handleImageUpload(event: Event) {
 
   const files = Array.from(target.files)
   files.forEach((file) => {
+    // 限制大小 20MB
+    if (file.size > 20 * 1024 * 1024) {
+      alert(`图片 ${file.name} 大小不能超过 20MB`)
+      return
+    }
+
     // 限制最多 5 张图片
     if (uploadedImages.value.length >= 5) {
       return

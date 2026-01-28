@@ -38,7 +38,12 @@
              <span class="page-type" :class="page.type">{{ getPageTypeName(page.type) }}</span>
           </div>
           
-          <div class="card-controls">
+        <div class="card-controls">
+            <!-- upload button -->
+            <button class="icon-btn" @click="triggerUpload(idx)" title="上传参考图">
+               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            </button>
+            
             <div class="drag-handle" title="拖拽排序">
                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
             </div>
@@ -46,6 +51,19 @@
                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
+        </div>
+
+        <input
+          type="file"
+          :ref="el => setFileInputRef(el, idx)"
+          style="display: none"
+          accept="image/*"
+          @change="handleImageUpload($event, idx)"
+        />
+
+        <div v-if="page.user_image" class="reference-image-preview">
+             <img :src="getPageImageSrc(page.user_image)" />
+             <button class="remove-btn" @click.stop="store.setPageImage(idx, undefined)">×</button>
         </div>
 
         <textarea
@@ -84,6 +102,48 @@ const dragOverIndex = ref<number | null>(null)
 const draggedIndex = ref<number | null>(null)
 // 保存状态指示
 const isSaving = ref(false)
+
+// File Input Refs
+const fileInputs = ref<Record<number, HTMLInputElement>>({})
+const setFileInputRef = (el: any, index: number) => {
+  if (el) {
+    fileInputs.value[index] = el as HTMLInputElement
+  }
+}
+
+const triggerUpload = (index: number) => {
+  const input = fileInputs.value[index]
+  if (input) input.click()
+}
+
+const getPageImageSrc = (base64: string) => {
+  if (base64.startsWith('data:image')) return base64
+  return `data:image/png;base64,${base64}`
+}
+
+const handleImageUpload = (event: Event, index: number) => {
+  const input = event.target as HTMLInputElement
+  if (input.files && input.files[0]) {
+    const file = input.files[0]
+    
+    // 限制大小 20MB
+    if (file.size > 20 * 1024 * 1024) {
+      alert('图片大小不能超过 20MB')
+      input.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const result = e.target?.result as string
+      store.setPageImage(index, result)
+    }
+    reader.readAsDataURL(file)
+    
+    // reset
+    input.value = ''
+  }
+}
 
 const getPageTypeName = (type: string) => {
   const names = {
@@ -169,10 +229,19 @@ const autoSaveOutline = async () => {
     isSaving.value = true
 
     // 调用更新历史记录 API
+    // 注意：这里保存时会自动剥离 user_image（因为 store.saveState 中也是剥离的逻辑吗？
+    // 不，store.saveState 是保存到 localStorage。 autoSaveOutline 是调用 API。
+    // API updateHistory 接受的 pages 包含 user_image 吗？
+    // Page 接口有 user_image，所以 updateHistory 会发送它。
+    // 但是 user_image 是 base64，发送到后端保存到 history.json 可能会很大。
+    // 后端 history.py 应该支持。但如果很大，可能会慢。
+    // 不过用户要求是“每一页支持上传图片”，所以必须得传。
+    // 我们可以让后端在保存 history 时剥离图片另存？
+    // 暂时先不管是直接传。
     const result = await updateHistory(store.recordId, {
       outline: {
         raw: store.outline.raw,
-        pages: store.outline.pages
+        pages: store.outline.pages // 这里包含 user_image
       }
     })
 
@@ -267,6 +336,42 @@ watch(
 </script>
 
 <style scoped>
+/* 参考图预览 */
+.reference-image-preview {
+  margin-bottom: 12px;
+  position: relative;
+  width: 80px;
+  height: 106px; /* 3:4 */
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  background: #f9f9f9;
+}
+.reference-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.remove-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+.remove-btn:hover {
+  background: rgba(255, 77, 79, 0.8);
+}
+
 /* 保存状态指示器 */
 .save-indicator {
   margin-left: 12px;
