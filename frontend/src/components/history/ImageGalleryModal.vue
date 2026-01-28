@@ -25,9 +25,25 @@
           <div class="modal-meta">
             <span>{{ record.outline.pages.length }} 张图片 · {{ formattedDate }}</span>
             <button
+              v-if="record.original_text"
+              class="view-outline-btn"
+              @click="showOriginalText = true"
+              title="查看原始输入"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <line x1="10" y1="9" x2="8" y2="9"></line>
+              </svg>
+              查看原文
+            </button>
+            <button
               class="view-outline-btn"
               @click="$emit('showOutline')"
               title="查看完整大纲"
+              style="margin-left: 8px;"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -113,6 +129,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Original Text Modal -->
+    <div v-if="showOriginalText" class="inner-modal-overlay" @click="showOriginalText = false">
+      <div class="inner-modal-content" @click.stop>
+        <div class="inner-modal-header">
+          <h3>原始输入</h3>
+          <button class="close-btn" @click="showOriginalText = false">×</button>
+        </div>
+        <div class="inner-modal-body">
+          <p class="original-text">{{ record.original_text }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -147,6 +176,7 @@ interface ViewingRecord {
     copywriting: string
     tags: string[]
   }
+  original_text?: string
 }
 
 // 定义 Props
@@ -168,6 +198,7 @@ defineEmits<{
 
 // 标题展开状态
 const titleExpanded = ref(false)
+const showOriginalText = ref(false)
 
 // 格式化日期
 const formattedDate = computed(() => {
@@ -200,6 +231,64 @@ const formattedDate = computed(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative; /* For inner modal positioning context/stacking if needed, though updated to fixed */
+}
+
+/* Inner Modal for Original Text */
+.inner-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.inner-modal-content {
+  background: white;
+  width: 90%;
+  max-width: 600px;
+  max-height: 70vh;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  animation: modal-pop 0.2s ease-out;
+}
+
+@keyframes modal-pop {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.inner-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inner-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.inner-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.original-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  margin: 0;
 }
 
 /* 头部区域 */
@@ -287,6 +376,7 @@ const formattedDate = computed(() => {
   background: var(--primary, #ff2442);
   color: white;
   border-color: var(--primary, #ff2442);
+  color: white;
 }
 
 /* 头部操作区 */

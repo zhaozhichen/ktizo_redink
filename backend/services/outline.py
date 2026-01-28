@@ -114,7 +114,22 @@ class OutlineService:
         with open(prompt_path, "r", encoding="utf-8") as f:
             return f.read()
 
-    def _parse_outline(self, outline_text: str) -> List[Dict[str, Any]]:
+    def _parse_outline(self, outline_text: str) -> (List[Dict[str, Any]], Optional[str]):
+        """
+        解析大纲文本，返回页面列表和自动生成的主题
+        Returns:
+            (pages, derived_topic)
+        """
+        derived_topic = None
+        
+        # 尝试提取主题行，格式如 "[主题]：xxx" 或 "[Topic]: xxx"
+        # 匹配以 [主题] 或 [Topic] 开头的行，忽略大小写
+        topic_match = re.search(r'^\[(?:主题|Topic)\][:：]\s*(.+)$', outline_text, re.MULTILINE | re.IGNORECASE)
+        if topic_match:
+            derived_topic = topic_match.group(1).strip()
+            # 从原文中移除这一行，避免被解析为页面内容
+            outline_text = outline_text.replace(topic_match.group(0), "")
+
         # 按 <page> 分割页面（兼容旧的 --- 分隔符）
         if '<page>' in outline_text:
             pages_raw = re.split(r'<page>', outline_text, flags=re.IGNORECASE)
@@ -129,6 +144,9 @@ class OutlineService:
             if not page_text:
                 continue
 
+            # 如果第一段被分割为空（例如主题行在最前面，且后面紧跟分隔符），跳过
+            # 或者是被移除主题后留下的空行
+            
             page_type = "content"
             type_match = re.match(r"\[(\S+)\]", page_text)
             if type_match:
@@ -146,7 +164,11 @@ class OutlineService:
                 "content": page_text
             })
 
-        return pages
+        # 重新整理索引，确保连续
+        for i, p in enumerate(pages):
+            p["index"] = i
+
+        return pages, derived_topic
 
     def generate_outline(
         self,
@@ -180,13 +202,14 @@ class OutlineService:
             )
 
             logger.debug(f"API 返回文本长度: {len(outline_text)} 字符")
-            pages = self._parse_outline(outline_text)
-            logger.info(f"大纲解析完成，共 {len(pages)} 页")
+            pages, derived_topic = self._parse_outline(outline_text)
+            logger.info(f"大纲解析完成，共 {len(pages)} 页，自动生成主题: {derived_topic}")
 
             return {
                 "success": True,
                 "outline": outline_text,
                 "pages": pages,
+                "derived_topic": derived_topic,
                 "has_images": images is not None and len(images) > 0
             }
 

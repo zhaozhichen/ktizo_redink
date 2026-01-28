@@ -91,24 +91,17 @@ class HistoryService:
         topic: str,
         outline: Dict,
         task_id: Optional[str] = None,
-        content: Optional[Dict] = None
+        content: Optional[Dict] = None,
+        original_text: Optional[str] = None
     ) -> str:
         """
         创建新的历史记录
-
-        初始状态为 draft（草稿），表示大纲已创建但尚未开始生成图片。
-
         Args:
-            topic: 绘本主题/标题
-            outline: 大纲内容，包含 pages 数组等信息
-            task_id: 关联的生成任务 ID（可选）
-            content: 生成的内容，包含 titles, copywriting, tags（可选）
-
-        Returns:
-            str: 新创建的记录 ID（UUID 格式）
-
-        状态流转：
-            新建 -> draft（草稿状态）
+            topic: 绘本主题/标题（可能是自动摘要后的）
+            outline: 大纲内容
+            task_id: 关联的生成任务 ID
+            content: 生成的内容
+            original_text: 用户原始输入文本
         """
         # 生成唯一记录 ID
         record_id = str(uuid.uuid4())
@@ -118,6 +111,7 @@ class HistoryService:
         record = {
             "id": record_id,
             "title": topic,
+            "original_text": original_text,  # 保存用户原始输入
             "created_at": now,
             "updated_at": now,
             "outline": outline,  # 保存完整大纲数据

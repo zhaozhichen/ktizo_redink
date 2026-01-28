@@ -62,8 +62,18 @@ def create_outline_blueprint():
             # 记录结果
             elapsed = time.time() - start_time
             if result["success"]:
+                # 如果自动生成了主题，使用它；否则使用原始 topic
+                final_topic = result.get("derived_topic") or topic
+                original_topic = topic # 保存原始输入
+                
                 logger.info(f"✅ 大纲生成成功，耗时 {elapsed:.2f}s，共 {len(result.get('pages', []))} 页")
-                return jsonify(result), 200
+                
+                # 将原始输入和最终标题都返回给前端
+                return jsonify({
+                    **result,
+                    "topic": final_topic,  # 现在的 title
+                    "original_topic": original_topic # 原始输入
+                }), 200
             else:
                 logger.error(f"❌ 大纲生成失败: {result.get('error', '未知错误')}")
                 return jsonify(result), 500

@@ -14,6 +14,8 @@ export interface OutlineResponse {
   outline?: string
   pages?: Page[]
   error?: string
+  topic?: string // derived topic (short)
+  original_topic?: string // original input (long)
 }
 
 export interface ProgressEvent {
@@ -197,6 +199,7 @@ export interface HistoryDetail {
     raw: string
     pages: Page[]
   }
+  original_text?: string
   images: {
     task_id: string | null
     generated: string[]
@@ -218,6 +221,7 @@ export interface CreateHistoryParams {
   outline: { raw: string; pages: Page[] }
   task_id?: string
   content?: { titles: string[]; copywriting: string; tags: string[] }
+  original_text?: string
 }
 
 /**
@@ -241,34 +245,17 @@ export interface UpdateHistoryParams {
  * @param outline.raw - 大纲的原始文本
  * @param outline.pages - 解析后的页面列表
  * @param taskId - 可选的任务 ID，用于关联图片生成任务
+ * @param content - 可选的内容数据
+ * @param originalText - 可选的用户原始输入文本
  *
  * @returns Promise<{ success: boolean; record_id?: string; error?: string }>
- * - success: 是否创建成功
- * - record_id: 创建的记录 ID（成功时返回）
- * - error: 错误信息（失败时返回）
- *
- * @throws {Error} 网络错误或服务器错误
- *
- * @example
- * ```typescript
- * const result = await createHistory(
- *   '小兔子的冒险',
- *   {
- *     raw: '第一页：小兔子出门了...',
- *     pages: [{ index: 0, type: 'cover', content: '...' }]
- *   },
- *   'task-123'
- * )
- * if (result.success) {
- *   console.log('记录创建成功，ID:', result.record_id)
- * }
- * ```
  */
 export async function createHistory(
   topic: string,
   outline: { raw: string; pages: Page[] },
   taskId?: string,
-  content?: { titles: string[]; copywriting: string; tags: string[] }
+  content?: { titles: string[]; copywriting: string; tags: string[] },
+  originalText?: string
 ): Promise<{ success: boolean; record_id?: string; error?: string }> {
   try {
     const response = await axios.post(
@@ -277,7 +264,8 @@ export async function createHistory(
         topic,
         outline,
         task_id: taskId,
-        content
+        content,
+        original_text: originalText
       },
       {
         timeout: 10000 // 10秒超时

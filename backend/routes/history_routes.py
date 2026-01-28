@@ -64,6 +64,7 @@ def create_history_blueprint():
             outline = data.get('outline')
             task_id = data.get('task_id')
             content = data.get('content')
+            original_text = data.get('original_text') # 获取原始文本
 
             if not topic or not outline:
                 return jsonify({
@@ -72,7 +73,7 @@ def create_history_blueprint():
                 }), 400
 
             history_service = get_history_service()
-            record_id = history_service.create_record(topic, outline, task_id, content)
+            record_id = history_service.create_record(topic, outline, task_id, content, original_text)
 
             return jsonify({
                 "success": True,

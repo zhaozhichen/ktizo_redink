@@ -45,6 +45,9 @@ export interface GeneratorState {
   // 用户输入的主题
   topic: string
 
+  // 用户原始输入（如果是长文本）
+  originalTopic?: string
+
   // 大纲数据（包含原始文本和解析后的页面列表）
   outline: {
     raw: string      // 原始大纲文本
@@ -101,7 +104,9 @@ function saveState(state: GeneratorState) {
     // 只保存关键数据，不保存 userImages（文件对象无法序列化）
     const toSave = {
       stage: state.stage,                    // 当前阶段
+      stage: state.stage,                    // 当前阶段
       topic: state.topic,                    // 用户输入的主题
+      originalTopic: state.originalTopic,    // 用户原始输入
       // 移除页面特定的 user_image（base64太大会导致超过localStorage限制）
       outline: {
         raw: state.outline.raw,
@@ -134,6 +139,9 @@ export const useGeneratorStore = defineStore('generator', {
 
       // 用户输入的主题
       topic: saved.topic || '',
+
+      // 用户原始输入
+      originalTopic: saved.originalTopic || '',
 
       // 大纲数据
       outline: saved.outline || {
@@ -183,6 +191,14 @@ export const useGeneratorStore = defineStore('generator', {
      */
     setTopic(topic: string) {
       this.topic = topic
+    },
+
+    /**
+     * 设置用户原始输入
+     * @param originalTopic 原始输入内容
+     */
+    setOriginalTopic(originalTopic: string) {
+      this.originalTopic = originalTopic
     },
 
     /**
@@ -335,13 +351,15 @@ export const useGeneratorStore = defineStore('generator', {
     updateProgress(index: number, status: 'generating' | 'done' | 'error', url?: string, error?: string) {
       const image = this.images.find(img => img.index === index)
       if (image) {
+        // Only increment if transitioning to 'done' from a non-done state
+        const wasNotDone = image.status !== 'done'
         image.status = status
         if (url) image.url = url
         if (error) image.error = error
-      }
-      // 成功完成时增加计数
-      if (status === 'done') {
-        this.progress.current++
+        // 成功完成时增加计数（Only if it wasn't done before）
+        if (status === 'done' && wasNotDone) {
+          this.progress.current++
+        }
       }
     },
 

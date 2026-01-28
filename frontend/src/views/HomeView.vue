@@ -95,19 +95,27 @@ async function handleGenerate() {
     )
 
     if (result.success && result.pages) {
+      // 优先使用后端提取的短标题，如果没有则使用用户输入
+      const shortTopic = result.topic || topic.value.trim()
+      const originalTopic = result.original_topic || topic.value.trim()
+
       // 设置主题和大纲到 store
-      store.setTopic(topic.value.trim())
+      store.setTopic(shortTopic)
+      store.setOriginalTopic(originalTopic) // 保存原始输入
       store.setOutline(result.outline || '', result.pages)
 
       // 大纲生成成功后，立即创建历史记录
       // 这样即使用户刷新页面或关闭浏览器，大纲也不会丢失
       try {
         const historyResult = await createHistory(
-          topic.value.trim(),
+          shortTopic, // 使用短标题作为记录名称
           {
             raw: result.outline || '',
             pages: result.pages
-          }
+          },
+          undefined, // task_id
+          undefined, // content
+          originalTopic // 传递原始长文本
         )
 
         // 保存历史记录 ID 到 store，后续生成正文和图片时会使用

@@ -6,6 +6,9 @@
         <p class="page-subtitle">恭喜！你的小红书图文已生成完毕，共 {{ store.images.length }} 张</p>
       </div>
       <div style="display: flex; gap: 12px;">
+        <button v-if="store.originalTopic" class="btn" @click="showOriginalTopicModal = true" style="background: white; border: 1px solid var(--border-color);">
+          查看原文
+        </button>
         <button class="btn" @click="startOver" style="background: white; border: 1px solid var(--border-color);">
           再来一篇
         </button>
@@ -13,6 +16,19 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           一键下载
         </button>
+      </div>
+    </div>
+    
+    <!-- Original Topic Modal -->
+    <div v-if="showOriginalTopicModal" class="modal-overlay" @click="showOriginalTopicModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>原始输入</h3>
+          <button class="close-btn" @click="showOriginalTopicModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <p style="white-space: pre-wrap; line-height: 1.6; color: var(--text-main);">{{ store.originalTopic }}</p>
+        </div>
       </div>
     </div>
 
@@ -85,6 +101,72 @@
 .image-card:hover img {
   transform: scale(1.05);
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  animation: modal-in 0.2s ease-out;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-sub);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--text-main);
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
 </style>
 
 <script setup lang="ts">
@@ -97,6 +179,7 @@ import ContentDisplay from '../components/result/ContentDisplay.vue'
 const router = useRouter()
 const store = useGeneratorStore()
 const regeneratingIndex = ref<number | null>(null)
+const showOriginalTopicModal = ref(false)
 
 const viewImage = (url: string) => {
   const baseUrl = url.split('?')[0]

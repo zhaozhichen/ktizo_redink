@@ -18,6 +18,15 @@
         >
           {{ isRetrying ? '补全中...' : '一键补全失败图片' }}
         </button>
+        <button
+          v-if="!isGenerating && !isRetrying && store.images.length > 0"
+          class="btn"
+          :class="{ 'btn-primary': !hasFailedImages }"
+          @click="proceedToResult"
+          style="border:1px solid var(--border-color)"
+        >
+          {{ hasFailedImages ? '暂且跳过并生成文案' : '下一步：生成文案' }}
+        </button>
         <button class="btn" @click="router.push('/outline')" style="border:1px solid var(--border-color)">
           返回大纲
         </button>
@@ -111,7 +120,8 @@ const isGenerating = computed(() => store.progress.status === 'generating')
 
 const progressPercent = computed(() => {
   if (store.progress.total === 0) return 0
-  return (store.progress.current / store.progress.total) * 100
+  const percent = (store.progress.current / store.progress.total) * 100
+  return Math.min(percent, 100)
 })
 
 const hasFailedImages = computed(() => store.images.some(img => img.status === 'error'))
@@ -126,6 +136,42 @@ const getStatusText = (status: string) => {
     retrying: '重试中'
   }
   return texts[status] || '等待中'
+}
+
+// 跳转到结果页并更新最后的状态
+async function proceedToResult() {
+  if (!store.taskId || !store.recordId) return
+
+  try {
+    // 确保跳转前更新历史记录状态
+    const generatedImages = store.images
+      .filter(img => img.status === 'done' && img.url)
+      .map(img => {
+        // 从URL中提取文件名 (e.g., /api/images/task_id/0.png -> 0.png)
+        const parts = img.url.split('/')
+        return parts[parts.length - 1].split('?')[0]
+      })
+
+    let status = 'completed'
+    if (hasFailedImages.value) {
+      status = generatedImages.length > 0 ? 'partial' : 'draft'
+    }
+
+    const thumbnail = generatedImages.length > 0 ? generatedImages[0] : null
+
+    await updateHistory(store.recordId, {
+      images: {
+        task_id: store.taskId,
+        generated: generatedImages
+      },
+      status: status,
+      thumbnail: thumbnail
+    })
+  } catch (e) {
+    console.error('Final history update failed:', e)
+  }
+
+  router.push('/result')
 }
 
 // 重试单张图片（异步并发执行，不阻塞）
@@ -196,6 +242,12 @@ async function retryAllFailed() {
       // onFinish
       () => {
         isRetrying.value = false
+        // 如果补全后没有失败的了，自动跳转
+        if (!hasFailedImages.value) {
+          setTimeout(() => {
+            proceedToResult()
+          }, 1000)
+        }
       },
       // onStreamError
       (err) => {
@@ -307,7 +359,7 @@ onMounted(async () => {
       // 如果没有失败的，跳转到结果页
       if (!hasFailedImages.value) {
         setTimeout(() => {
-          router.push('/result')
+          proceedToResult()
         }, 1000)
       }
     },
