@@ -137,8 +137,9 @@ def create_image_blueprint():
                 thumb_filename = f"thumb_{filename}"
                 thumb_filepath = os.path.join(history_root, task_id, thumb_filename)
 
-                if os.path.exists(thumb_filepath):
-                    return send_file(thumb_filepath, mimetype='image/png')
+                # 只有文件存在且非空时才返回缩略图
+                if os.path.exists(thumb_filepath) and os.path.getsize(thumb_filepath) > 0:
+                    return send_file(thumb_filepath)
 
             # 返回原图
             filepath = os.path.join(history_root, task_id, filename)
@@ -149,7 +150,7 @@ def create_image_blueprint():
                     "error": f"图片不存在：{task_id}/{filename}"
                 }), 404
 
-            return send_file(filepath, mimetype='image/png')
+            return send_file(filepath)
 
         except Exception as e:
             log_error('/images', e)

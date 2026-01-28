@@ -50,7 +50,11 @@
         <div v-for="image in store.images" :key="image.index" class="image-card">
           <!-- 图片展示区域 -->
           <div v-if="image.url && image.status === 'done'" class="image-preview">
-            <img :src="image.url" :alt="`第 ${image.index + 1} 页`" />
+            <img 
+              :src="getImageUrl(image)" 
+              @error="handleImageError(image)"
+              :alt="`第 ${image.index + 1} 页`" 
+            />
             <!-- 重新生成按钮（悬停显示） -->
             <div class="image-overlay">
               <button
@@ -136,6 +140,24 @@ const getStatusText = (status: string) => {
     retrying: '重试中'
   }
   return texts[status] || '等待中'
+}
+
+// 记录加载失败的缩略图
+const failedThumbs = ref(new Set<number>())
+
+function getImageUrl(image: any) {
+  if (failedThumbs.value.has(image.index)) {
+    // 加上 timestamp 强制刷新，并禁用缩略图
+    return `${image.url}&thumbnail=false&retry=${Date.now()}`
+  }
+  return image.url
+}
+
+function handleImageError(image: any) {
+  if (!failedThumbs.value.has(image.index)) {
+    console.warn(`第 ${image.index + 1} 页缩略图加载失败，尝试加载原图`)
+    failedThumbs.value.add(image.index)
+  }
 }
 
 // 跳转到结果页并更新最后的状态
