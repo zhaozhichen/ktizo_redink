@@ -53,7 +53,7 @@ class Config:
                     'type': 'google_genai',
                     'api_key': api_key,
                     'model': image_model,
-                    'high_concurrency': False
+                    'high_concurrency': os.getenv('GEMINI_HIGH_CONCURRENCY', 'false').lower() == 'true'
                 }
             }
         }
