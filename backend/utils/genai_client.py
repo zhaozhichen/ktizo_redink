@@ -100,7 +100,7 @@ class GenAIClient:
     def generate_text(
         self,
         prompt: str,
-        model: str = "gemini-3-pro-preview",
+        model: str = "gemini-3.1-pro-preview",
         temperature: float = 1.0,
         max_output_tokens: int = 8000,
         use_search: bool = False,

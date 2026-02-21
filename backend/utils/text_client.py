@@ -103,7 +103,7 @@ class TextChatClient:
     def generate_text(
         self,
         prompt: str,
-        model: str = "gemini-3-pro-preview",
+        model: str = "gemini-3.1-pro-preview",
         temperature: float = 1.0,
         max_output_tokens: int = 8000,
         images: List[Union[bytes, str]] = None,
