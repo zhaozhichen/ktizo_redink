@@ -197,7 +197,7 @@ class ImageService:
                     prompt=prompt,
                     aspect_ratio=self.provider_config.get('default_aspect_ratio', '3:4'),
                     temperature=self.provider_config.get('temperature', 1.0),
-                    model=self.provider_config.get('model', 'gemini-3-pro-image-preview'),
+                    model=self.provider_config.get('model', os.environ["GEMINI_IMAGE_MODEL"]),
                     reference_image=primary_reference_image,
                 )
             elif self.provider_config.get('type') == 'image_api':

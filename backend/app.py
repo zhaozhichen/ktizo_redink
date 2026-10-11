@@ -1,3 +1,4 @@
+import os
 import logging
 import sys
 from pathlib import Path
@@ -114,6 +115,15 @@ def _validate_config_on_startup(logger):
     import yaml
 
     logger.info("📋 检查配置文件...")
+
+    if os.getenv('KTIZO_AI_MANAGED') == 'true':
+        for name, config in [('text', Config.load_text_providers_config()),
+                             ('image', Config.load_image_providers_config())]:
+            provider = config['providers'][config['active_provider']]
+            if not provider.get('api_key'):
+                raise ValueError('GEMINI_API_KEY is required in managed mode')
+            logger.info("Managed %s model: %s", name, provider['model'])
+        return
 
     # 检查 text_providers.yaml
     text_config_path = Path(__file__).parent.parent / 'text_providers.yaml'

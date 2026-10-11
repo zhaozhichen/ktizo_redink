@@ -1,4 +1,5 @@
 """Text API 客户端封装"""
+import os
 import time
 import random
 import base64
@@ -103,7 +104,7 @@ class TextChatClient:
     def generate_text(
         self,
         prompt: str,
-        model: str = "gemini-3.1-pro-preview",
+        model: str = os.environ["GEMINI_QUALITY_MODEL"],
         temperature: float = 1.0,
         max_output_tokens: int = 8000,
         images: List[Union[bytes, str]] = None,

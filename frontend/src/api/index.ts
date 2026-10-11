@@ -737,6 +737,7 @@ export interface Config {
 
 // 获取配置
 export async function getConfig(): Promise<{
+  ai_managed?: boolean
   success: boolean
   config?: Config
   error?: string

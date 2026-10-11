@@ -8,6 +8,8 @@
 """
 
 import logging
+import os
+from backend.config import Config
 from pathlib import Path
 import yaml
 from flask import Blueprint, request, jsonify
@@ -51,8 +53,13 @@ def create_config_blueprint():
                 'providers': {}
             })
 
+            managed = os.getenv('KTIZO_AI_MANAGED') == 'true'
+            if managed:
+                text_config = Config.load_text_providers_config()
+                image_config = Config.load_image_providers_config()
             return jsonify({
                 "success": True,
+                "ai_managed": managed,
                 "config": {
                     "text_generation": {
                         "active_provider": text_config.get('active_provider', ''),
@@ -89,6 +96,8 @@ def create_config_blueprint():
         - message: 结果消息
         """
         try:
+            if os.getenv('KTIZO_AI_MANAGED') == 'true':
+                return jsonify(success=False, error='AI 设置由 ktizo_io 统一管理'), 409
             data = request.get_json()
 
             # 更新图片生成配置
@@ -138,6 +147,8 @@ def create_config_blueprint():
         - message: 测试结果消息
         """
         try:
+            if os.getenv('KTIZO_AI_MANAGED') == 'true':
+                return jsonify(success=False, error='AI 设置由 ktizo_io 统一管理'), 409
             data = request.get_json()
             provider_type = data.get('type')
             provider_name = data.get('provider_name')
@@ -350,7 +361,7 @@ def _test_google_gemini(config: dict, test_prompt: str) -> dict:
             vertexai=True
         )
 
-    model = config.get('model') or 'gemini-2.0-flash-exp'
+    model = config.get('model') or os.environ["GEMINI_MULTIMODAL_MODEL"]
     response = client.models.generate_content(
         model=model,
         contents=test_prompt

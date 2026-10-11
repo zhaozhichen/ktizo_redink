@@ -1,4 +1,5 @@
 """Google GenAI 客户端封装"""
+import os
 import time
 import random
 from functools import wraps
@@ -100,7 +101,7 @@ class GenAIClient:
     def generate_text(
         self,
         prompt: str,
-        model: str = "gemini-3.1-pro-preview",
+        model: str = os.environ["GEMINI_QUALITY_MODEL"],
         temperature: float = 1.0,
         max_output_tokens: int = 8000,
         use_search: bool = False,
@@ -177,7 +178,7 @@ class GenAIClient:
     def generate_image(
         self,
         prompt: str,
-        model: str = "gemini-3-pro-image-preview",
+        model: str = os.environ["GEMINI_IMAGE_MODEL"],
         aspect_ratio: str = "3:4",
         temperature: float = 1.0,
     ) -> bytes:

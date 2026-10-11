@@ -28,10 +28,12 @@ class Config:
         """
         api_key = os.getenv('GEMINI_API_KEY')
         if not api_key:
+            if os.getenv("KTIZO_AI_MANAGED") == "true":
+                raise ValueError("GEMINI_API_KEY is required in managed mode")
             return None, None
         
-        text_model = os.getenv('GEMINI_TEXT_MODEL', 'gemini-3-flash-preview')
-        image_model = os.getenv('GEMINI_IMAGE_MODEL', 'gemini-3-pro-image-preview')
+        text_model = os.environ["GEMINI_MULTIMODAL_MODEL"]
+        image_model = os.environ["GEMINI_IMAGE_MODEL"]
         
         text_config = {
             'active_provider': 'gemini',

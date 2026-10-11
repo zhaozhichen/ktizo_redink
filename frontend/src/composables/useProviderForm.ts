@@ -72,6 +72,7 @@ export const imageTypeOptions = [
  */
 export function useProviderForm() {
   // 加载状态
+  const aiManaged = ref(false)
   const loading = ref(true)
   const saving = ref(false)
   const testingText = ref(false)
@@ -139,6 +140,7 @@ export function useProviderForm() {
     loading.value = true
     try {
       const result = await getConfig()
+      aiManaged.value = !!result.ai_managed
       if (result.success && result.config) {
         textConfig.value = {
           active_provider: result.config.text_generation.active_provider,
@@ -507,6 +509,7 @@ export function useProviderForm() {
     testingText,
     testingImage,
 
+    aiManaged,
     // 配置数据
     textConfig,
     imageConfig,

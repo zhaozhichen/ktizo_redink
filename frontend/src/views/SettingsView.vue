@@ -10,6 +10,14 @@
       <p>加载配置中...</p>
     </div>
 
+    <div v-else-if="aiManaged" class="settings-container">
+      <div class="card">
+        <h2 class="section-title">AI 设置由管理员统一管理</h2>
+        <p>文本模型：{{ Object.values(textConfig.providers)[0]?.model }}</p>
+        <p>图片模型：{{ Object.values(imageConfig.providers)[0]?.model }}</p>
+        <p>API Key 已配置。如需更改，请联系管理员。</p>
+      </div>
+    </div>
     <div v-else class="settings-container">
       <!-- 文本生成配置 -->
       <div class="card">
@@ -118,6 +126,7 @@ import {
 // 使用 composable 管理表单状态和逻辑
 const {
   // 状态
+  aiManaged,
   loading,
   testingText,
   testingImage,

@@ -1,4 +1,5 @@
 """Google GenAI 图片生成器"""
+import os
 import logging
 import base64
 from typing import Dict, Any, Optional
@@ -331,7 +332,7 @@ class GoogleGenAIGenerator(ImageGeneratorBase):
         prompt: str,
         aspect_ratio: str = "3:4",
         temperature: float = 1.0,
-        model: str = "gemini-3-pro-image-preview",
+        model: str = os.environ["GEMINI_IMAGE_MODEL"],
         reference_image: Optional[bytes] = None,
         **kwargs
     ) -> bytes:
