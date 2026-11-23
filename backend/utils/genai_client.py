@@ -1,4 +1,5 @@
 """Google GenAI 客户端封装"""
+from backend.config import central_model
 import os
 import time
 import random
@@ -66,26 +67,10 @@ class GenAIClient:
     """GenAI 客户端封装类（已弃用，请使用 GoogleGenAIGenerator）"""
 
     def __init__(self, api_key: str = None, base_url: str = None):
-        self.api_key = api_key
-        if not self.api_key:
-            raise ValueError(
-                "Google Cloud API Key 未配置。\n"
-                "解决方案：在系统设置页面编辑该服务商，填写 API Key"
-            )
-
-        # 构建客户端参数
-        client_kwargs = {"api_key": self.api_key}
-
-        # 如果有 base_url，使用 http_options
-        if base_url:
-            client_kwargs["http_options"] = {
-                "base_url": base_url,
-                "api_version": "v1beta"
-            }
-
-        # 默认使用 Gemini API (vertexai=False)，因为大多数用户使用 Google AI Studio 的 API Key
-        # Vertex AI 需要 OAuth2 认证，不支持 API Key
-        client_kwargs["vertexai"] = False
+        self.api_key = os.environ['GEMINI_API_KEY']
+        if not self.api_key or api_key not in (None, self.api_key) or base_url:
+            raise ValueError('AI credentials and endpoint are managed by ktizo_io')
+        client_kwargs = {"api_key": self.api_key, "vertexai": False}
 
         self.client = genai.Client(**client_kwargs)
 
@@ -101,7 +86,7 @@ class GenAIClient:
     def generate_text(
         self,
         prompt: str,
-        model: str = os.environ["GEMINI_QUALITY_MODEL"],
+        model: str = os.environ["GEMINI_MULTIMODAL_MODEL"],
         temperature: float = 1.0,
         max_output_tokens: int = 8000,
         use_search: bool = False,
@@ -164,7 +149,7 @@ class GenAIClient:
 
         result = ""
         for chunk in self.client.models.generate_content_stream(
-            model=model,
+            model=central_model("GEMINI_MULTIMODAL_MODEL", model),
             contents=contents,
             config=generate_content_config,
         ):
@@ -215,7 +200,7 @@ class GenAIClient:
 
         image_data = None
         for chunk in self.client.models.generate_content_stream(
-            model=model,
+            model=central_model("GEMINI_IMAGE_MODEL", model),
             contents=contents,
             config=generate_content_config,
         ):

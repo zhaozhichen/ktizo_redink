@@ -44,9 +44,7 @@ RUN uv sync --no-dev
 # 复制后端代码
 COPY backend/ ./backend/
 
-# 复制空白配置文件模板（不包含任何 API Key）
-COPY docker/text_providers.yaml ./
-COPY docker/image_providers.yaml ./
+# AI model roles are injected from ktizo_io/config/ai.env at runtime.
 
 # 从构建阶段复制前端产物
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist

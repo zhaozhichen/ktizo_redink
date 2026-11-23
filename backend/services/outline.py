@@ -2,7 +2,6 @@ import logging
 import os
 import re
 import base64
-import yaml
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from backend.utils.text_client import get_text_chat_client
@@ -32,8 +31,8 @@ class OutlineService:
             raise ValueError(
                 "未找到任何文本生成服务商配置。\n"
                 "解决方案：\n"
-                "1. 在系统设置页面添加文本生成服务商\n"
-                "2. 或手动编辑 text_providers.yaml 文件"
+                "1. 检查 ktizo_io 的集中配置\n"
+                "2. 由管理员编辑 ktizo_io/config/ai.env 文件"
             )
 
         if active_provider not in providers:
@@ -42,7 +41,7 @@ class OutlineService:
             raise ValueError(
                 f"未找到文本生成服务商配置: {active_provider}\n"
                 f"可用的服务商: {available}\n"
-                "解决方案：在系统设置中选择一个可用的服务商"
+                "解决方案：检查 ktizo_io 的集中配置"
             )
 
         provider_config = providers.get(active_provider, {})
@@ -140,7 +139,7 @@ class OutlineService:
             providers = self.text_config.get('providers', {})
             provider_config = providers.get(active_provider, {})
 
-            model = provider_config.get('model', os.environ["GEMINI_MULTIMODAL_MODEL"])
+            model = os.environ["GEMINI_MULTIMODAL_MODEL"]
             temperature = provider_config.get('temperature', 1.0)
             max_output_tokens = provider_config.get('max_output_tokens', 8000)
 
@@ -177,7 +176,7 @@ class OutlineService:
                     "可能原因：\n"
                     "1. API Key 无效或已过期\n"
                     "2. API Key 没有访问该模型的权限\n"
-                    "解决方案：在系统设置页面检查并更新 API Key"
+                    "解决方案：检查 ktizo_io/.env 中的集中凭据"
                 )
             elif "model" in error_msg.lower() or "404" in error_msg:
                 detailed_error = (
@@ -186,7 +185,7 @@ class OutlineService:
                     "可能原因：\n"
                     "1. 模型名称不正确\n"
                     "2. 没有访问该模型的权限\n"
-                    "解决方案：在系统设置页面检查模型名称配置"
+                    "解决方案：检查 ktizo_io/config/ai.env 中的模型"
                 )
             elif "timeout" in error_msg.lower() or "连接" in error_msg:
                 detailed_error = (
@@ -215,7 +214,7 @@ class OutlineService:
                     "1. Text API 配置错误或密钥无效\n"
                     "2. 网络连接问题\n"
                     "3. 模型无法访问或不存在\n"
-                    "建议：检查配置文件 text_providers.yaml"
+                    "建议：检查配置文件 ktizo_io/config/ai.env"
                 )
 
             return {

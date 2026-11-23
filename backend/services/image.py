@@ -191,45 +191,13 @@ class ImageService:
             primary_reference_image = page_specific_image_data if page_specific_image_data else reference_image
 
             # 调用生成器生成图片
-            if self.provider_config.get('type') == 'google_genai':
-                logger.debug(f"  使用 Google GenAI 生成器")
-                image_data = self.generator.generate_image(
-                    prompt=prompt,
-                    aspect_ratio=self.provider_config.get('default_aspect_ratio', '3:4'),
-                    temperature=self.provider_config.get('temperature', 1.0),
-                    model=self.provider_config.get('model', os.environ["GEMINI_IMAGE_MODEL"]),
-                    reference_image=primary_reference_image,
-                )
-            elif self.provider_config.get('type') == 'image_api':
-                logger.debug(f"  使用 Image API 生成器")
-                # Image API 支持多张参考图片
-                # 优先级：页面特定图 > 用户全局上传图 > 封面参考图
-                reference_images = []
-                
-                if page_specific_image_data:
-                    reference_images.append(page_specific_image_data)
-
-                if user_images:
-                    reference_images.extend(user_images)
-                
-                if reference_image:
-                    reference_images.append(reference_image)
-
-                image_data = self.generator.generate_image(
-                    prompt=prompt,
-                    aspect_ratio=self.provider_config.get('default_aspect_ratio', '3:4'),
-                    temperature=self.provider_config.get('temperature', 1.0),
-                    model=self.provider_config.get('model', 'nano-banana-2'),
-                    reference_images=reference_images if reference_images else None,
-                )
-            else:
-                logger.debug(f"  使用 OpenAI 兼容生成器")
-                image_data = self.generator.generate_image(
-                    prompt=prompt,
-                    size=self.provider_config.get('default_size', '1024x1024'),
-                    model=self.provider_config.get('model'),
-                    quality=self.provider_config.get('quality', 'standard'),
-                )
+            image_data = self.generator.generate_image(
+                prompt=prompt,
+                aspect_ratio=self.provider_config.get('default_aspect_ratio', '3:4'),
+                temperature=self.provider_config.get('temperature', 1.0),
+                model=os.environ["GEMINI_IMAGE_MODEL"],
+                reference_image=primary_reference_image,
+            )
 
             # 保存图片（使用当前任务目录）
             filename = f"{index}.png"
