@@ -746,32 +746,6 @@ export async function getConfig(): Promise<{
   return response.data
 }
 
-// 更新配置
-export async function updateConfig(config: Partial<Config>): Promise<{
-  success: boolean
-  message?: string
-  error?: string
-}> {
-  const response = await axios.post(`${API_BASE_URL}/config`, config)
-  return response.data
-}
-
-// 测试服务商连接
-export async function testConnection(config: {
-  type: string
-  provider_name?: string
-  api_key?: string
-  base_url?: string
-  model: string
-}): Promise<{
-  success: boolean
-  message?: string
-  error?: string
-}> {
-  const response = await axios.post(`${API_BASE_URL}/config/test`, config)
-  return response.data
-}
-
 // ==================== 内容生成 API（标题、文案、标签） ====================
 
 export interface ContentResponse {
